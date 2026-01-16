@@ -135,6 +135,7 @@ RUN  set -eux && apk add --no-cache \
     --with-compat \
     --with-stream=dynamic \
     --with-http_ssl_module \
+    --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_LUA52COMPAT' \
     # --with-debug \
     # --with-lua_resty_core \
     # --with-lua_resty_lrucache \
