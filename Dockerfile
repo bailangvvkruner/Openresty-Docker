@@ -268,8 +268,7 @@ RUN set -eux && apk add --no-cache \
     upx --best --lzma /usr/local/nginx/sbin/nginx && \
     upx --best --lzma /usr/local/luajit/bin/luajit && \
     upx --best --lzma /usr/local/luajit/lib/libluajit-5.1.so.2 && \
-    find /usr/local/nginx/modules -name '*.so' -exec upx --best --lzma {} \; && \
-    find /usr/local/lualib -name '*.so' -exec upx --best --lzma {} \; && \
+    find / -name '*.so' -exec upx --best --lzma {} \; && \
     \
     echo "Done"
 
