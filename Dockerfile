@@ -4,7 +4,7 @@ FROM alpine:latest AS builder
 WORKDIR /build
 
 # 安装构建依赖
-RUN  set -eux && apk add --no-cache \
+RUN set -eux && apk add --no-cache \
     build-base \
     curl \
     pcre-dev \
@@ -25,6 +25,8 @@ RUN  set -eux && apk add --no-cache \
     g++ \
     tree \
     && \
+    # 工作路径 替代 WORKDIR /tmp
+    cd /tmp && \
     # OPENRESTY_VERSION=$(wget --timeout 10 -q -O - https://openresty.org/en/download.html | grep -oE 'openresty-[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -d'-' -f2) \
     OPENRESTY_VERSION=$(wget --timeout=10 -q -O - https://openresty.org/en/download.html \
     | grep -ioE 'openresty [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' \
@@ -39,11 +41,16 @@ RUN  set -eux && apk add --no-cache \
     && \
     CORERULESET_VERSION=$(curl -s https://api.github.com/repos/coreruleset/coreruleset/releases/latest | grep -oE '"tag_name": "[^"]+' | cut -d'"' -f4 | sed 's/v//') \
     && \
-    PCRE_VERSION=$(curl -sL https://sourceforge.net/projects/pcre/files/pcre/ \
-    | grep -oE 'pcre/[0-9]+\.[0-9]+/' \
-    | grep -oE '[0-9]+\.[0-9]+' \
-    | sort -Vr \
-    | head -n1) \
+    NGX_BROTLI_VERSION=$(curl -sL https://github.com/google/ngx_brotli/releases/ | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -c2-) \
+    && \
+    BROTLI_VERSION=$(curl -sL https://github.com/google/brotli/releases/ | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -c2-) \
+    && \
+    # PCRE_VERSION=$(curl -sL https://sourceforge.net/projects/pcre/files/pcre/ \
+    # | grep -oE 'pcre/[0-9]+\.[0-9]+/' \
+    # | grep -oE '[0-9]+\.[0-9]+' \
+    # | sort -Vr \
+    # | head -n1) \
+    PCRE2_VERSION=$(curl -sL https://github.com/PCRE2Project/pcre2/releases/ | grep -ioE 'pcre2-[0-9]+\.[0-9]+' | grep -v RC | cut -d'-' -f2 | sort -Vr | head -n1) \
     && \
     echo "=============版本号=============" && \
     echo "OPENRESTY_VERSION=${OPENRESTY_VERSION}" && \
@@ -51,7 +58,10 @@ RUN  set -eux && apk add --no-cache \
     echo "ZLIB_VERSION=${ZLIB_VERSION}" && \
     echo "ZSTD_VERSION=${ZSTD_VERSION}" && \
     echo "CORERULESET_VERSION=${CORERULESET_VERSION}" && \
-    echo "PCRE_VERSION=${CORERULESET_VERSION}" && \
+    # echo "PCRE_VERSION=${CORERULESET_VERSION}" && \
+    echo "PCRE2_VERSION=${PCRE2_VERSION}" && \
+    echo "NGX_BROTLI_VERSION=${NGX_BROTLI_VERSION}" && \
+    echo "BROTLI_VERSION=${BROTLI_VERSION}" && \
     \
     # fallback 以防 curl/grep 失败
     OPENRESTY_VERSION="${OPENRESTY_VERSION:-1.21.4.1}" && \
@@ -73,11 +83,35 @@ RUN  set -eux && apk add --no-cache \
     curl -fSL https://fossies.org/linux/misc/zlib-${ZLIB_VERSION}.tar.gz -o zlib.tar.gz && \
     tar xzf zlib.tar.gz && \
     \
-    curl -fSL https://sourceforge.net/projects/pcre/files/pcre/${PCRE_VERSION}/pcre-${PCRE_VERSION}.tar.gz/download -o pcre.tar.gz && \
-    tar xzf pcre.tar.gz && \
+    # curl -fSL https://sourceforge.net/projects/pcre/files/pcre/${PCRE_VERSION}/pcre-${PCRE_VERSION}.tar.gz/download -o pcre.tar.gz && \
+    # tar xzf pcre.tar.gz && \
+    curl -fSL https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz -o pcre2.tar.gz && \
+    tar xzf pcre2.tar.gz && \
     \
     # tree \
     # && \
+    # brotli模块
+    cd /tmp && \
+    git clone --depth 1 --recurse-submodules https://github.com/google/ngx_brotli.git && \
+    git clone --depth=1 https://github.com/tokers/zstd-nginx-module.git && \
+    cd ngx_brotli/deps/brotli && \
+    mkdir out && cd out && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local/brotli .. && \
+    make -j$(nproc) && \
+    make install && \
+    cd /tmp/zstd-${ZSTD_VERSION} && \
+    make -j$(nproc) && \
+    make install PREFIX=/usr/local/zstd && \
+    cd /tmp && \
+    # zstd模块
+    cd /tmp && \
+    git clone --depth 1 --recurse-submodules https://github.com/google/ngx_brotli.git && \
+    git clone --depth=1 https://github.com/tokers/zstd-nginx-module.git && \
+    cd ngx_brotli/deps/brotli && \
+    mkdir out && cd out && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local/brotli .. && \
+    make -j$(nproc) && \
+    make install && \
   
     # cd openresty-${OPENRESTY_VERSION} && \
     # ./configure \
@@ -101,6 +135,9 @@ RUN  set -eux && apk add --no-cache \
     # make install \
   
     cd openresty-${OPENRESTY_VERSION} && \
+    # 申明两个模块路径
+    export ZSTD_INC=/usr/local/zstd/include && \
+    export ZSTD_LIB=/usr/local/zstd/lib && \
     ./configure \
     --prefix=/usr/local \
     --modules-path=/usr/local/nginx/modules \
@@ -108,13 +145,20 @@ RUN  set -eux && apk add --no-cache \
     --conf-path=/usr/local/nginx/conf/nginx.conf \
     --error-log-path=/usr/local/nginx/logs/error.log \
     --http-log-path=/usr/local/nginx/logs/access.log \
-    # --with-cc-opt="-static -O3 -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
-    # --with-ld-opt="-static -Wl,--export-dynamic" \
-    --with-cc-opt="-O3 -DNGX_LUA_ABORT_AT_PANIC" \
-    --with-ld-opt="-Wl,--export-dynamic" \
+    --with-cc-opt="-static -O3 -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
+    --with-ld-opt="-static -Wl,--export-dynamic" \
+    # --with-cc-opt="-O3 -DNGX_LUA_ABORT_AT_PANIC" \
+    # --with-ld-opt="-Wl,--export-dynamic" \
+    # --with-cc-opt="-O3 -flto -static -static-libgcc -I/usr/local/brotli/include -I/usr/local/zstd/include" \
+    # --with-ld-opt="-flto -static -L/usr/local/brotli/lib -L/usr/local/zstd/lib" \
     --with-openssl=../openssl-${OPENSSL_VERSION} \
     --with-zlib=../zlib-${ZLIB_VERSION} \
-    --with-pcre=../pcre-${PCRE_VERSION} \
+    # 狗屎的Trae把PCRE老加上 都2版本了
+    # --with-pcre=../pcre-${PCRE_VERSION} \
+    --with-pcre=../pcre2-${PCRE2_VERSION} \
+    # 两压缩模块
+    --add-module=../ngx_brotli \
+    --add-module=../zstd-nginx-module \
     --with-pcre-jit \
     --with-stream \
     --user=nobody \
@@ -214,10 +258,23 @@ RUN  set -eux && apk add --no-cache \
     && \
     # strip /usr/local/nginx/sbin/nginx
     strip /usr/local/nginx/sbin/nginx && \
-    strip /usr/local/luajit/bin/luajit || true && \
-    strip /usr/local/luajit/lib/libluajit-5.1.so.2 || true && \
-    find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
-    find /usr/local/lualib -name '*.so' -exec strip {} \; || true
+    # strip /usr/local/luajit/bin/luajit || true && \
+    strip /usr/local/luajit/bin/luajit && \
+    # strip /usr/local/luajit/lib/libluajit-5.1.so.2 || true && \
+    strip /usr/local/luajit/lib/libluajit-5.1.so.2 && \
+    # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
+    # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
+    find /usr/local/nginx/modules -name '*.so' -exec strip {} \; && \
+    # find /usr/local/lualib -name '*.so' -exec strip {} \; || true && \
+    find /usr/local/lualib -name '*.so' -exec strip {} \; && \
+    \
+    upx --best --lzma /usr/local/nginx/sbin/nginx && \
+    upx --best --lzma /usr/local/luajit/bin/luajit && \
+    upx --best --lzma /usr/local/luajit/lib/libluajit-5.1.so.2 && \
+    find /usr/local/nginx/modules -name '*.so' -exec upx --best --lzma {} \; && \
+    find /usr/local/lualib -name '*.so' -exec upx --best --lzma {} \; && \
+    \
+    echo "Done"
 
 FROM alpine:latest
 
