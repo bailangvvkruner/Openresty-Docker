@@ -135,7 +135,11 @@ RUN  set -eux && apk add --no-cache \
     --with-compat \
     --with-stream=dynamic \
     --with-http_ssl_module \
-    --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_LUA52COMPAT' \
+    --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_GC64' \
+    # 优化双精度浮点数性能的编译选项
+    # --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_LUA52COMPAT -DLUAJIT_ENABLE_GC64' \
+    # 官方推荐：在configure中直接使用多核
+    -j$(nproc) \
     # --with-debug \
     # --with-lua_resty_core \
     # --with-lua_resty_lrucache \
@@ -174,7 +178,7 @@ RUN  set -eux && apk add --no-cache \
     # --without-stream_map_module \
     # --without-stream_split_clients_module \
     # --without-stream_return_module \
-
+    
     # cd openresty-${OPENRESTY_VERSION} && \
     # ./configure \
     # --prefix=/usr/local/openresty \
@@ -203,8 +207,10 @@ RUN  set -eux && apk add --no-cache \
     # --with-file-aio
     
     && \
-    make -j$(nproc) && \
-    make install \
+    # 按照官方推荐使用多核编译
+    # make -j$(nproc) && \
+    make -j$(nproc) V=1 && \
+    make -j$(nproc) install \
     && \
     # strip /usr/local/nginx/sbin/nginx
     strip /usr/local/nginx/sbin/nginx && \
