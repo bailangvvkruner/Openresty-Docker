@@ -38,7 +38,8 @@ RUN set -eux && apk add --no-cache \
     && \
     ZLIB_VERSION=$(wget -q -O - https://zlib.net/ | grep -oE 'zlib-[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -d'-' -f2) \
     && \
-    ZSTD_VERSION=$(curl -Ls https://github.com/facebook/zstd/releases/latest | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -c2-) \
+    ZSTD_VERSION=$(curl -Ls https://github.com/facebook/zstd/releases/latest | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -c2-) && \
+    tar xzf zstd.tar.gz && \
     && \
     CORERULESET_VERSION=$(curl -s https://api.github.com/repos/coreruleset/coreruleset/releases/latest | grep -oE '"tag_name": "[^"]+' | cut -d'"' -f4 | sed 's/v//') \
     && \
@@ -71,6 +72,8 @@ RUN set -eux && apk add --no-cache \
     ZSTD_VERSION="${ZSTD_VERSION:-1.5.7}" && \
     CORERULESET_VERSION="${CORERULESET_VERSION:-4.15.0}" && \
     PCRE_VERSION="${PCRE_VERSION:-8.45}" && \
+    NGX_BROTLI_VERSION="${NGX_BROTLI_VERSION:-1.0.0}" && \
+    BROTLI_VERSION="${BROTLI_VERSION:-1.2.0}" && \
     \
     echo "==> Using versions: openresty-${OPENRESTY_VERSION}, openssl-${OPENSSL_VERSION}, zlib-${ZLIB_VERSION}, ZSTD_VERSION-${ZSTD_VERSION}, CORERULESET_VERSION-${CORERULESET_VERSION}, CORERULESET_VERSION-${CORERULESET_VERSION}" && \
     \
