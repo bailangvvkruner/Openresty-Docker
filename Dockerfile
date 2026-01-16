@@ -21,6 +21,7 @@ RUN set -eux && apk add --no-cache \
     automake \
     libtool \
     make \
+    cmake \
     gcc \
     g++ \
     tree \
