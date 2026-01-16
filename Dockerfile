@@ -91,7 +91,7 @@ RUN set -eux && apk add --no-cache \
     \
     # tree \
     # && \
-    # brotli模块
+    # zstd模块 brotli模块
     cd /tmp && \
     git clone --depth 1 --recurse-submodules https://github.com/google/ngx_brotli.git && \
     git clone --depth=1 https://github.com/tokers/zstd-nginx-module.git && \
@@ -104,15 +104,6 @@ RUN set -eux && apk add --no-cache \
     make -j$(nproc) && \
     make install PREFIX=/usr/local/zstd && \
     cd /tmp && \
-    # zstd模块
-    cd /tmp && \
-    git clone --depth 1 --recurse-submodules https://github.com/google/ngx_brotli.git && \
-    git clone --depth=1 https://github.com/tokers/zstd-nginx-module.git && \
-    cd ngx_brotli/deps/brotli && \
-    mkdir out && cd out && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local/brotli .. && \
-    make -j$(nproc) && \
-    make install && \
   
     # cd openresty-${OPENRESTY_VERSION} && \
     # ./configure \
