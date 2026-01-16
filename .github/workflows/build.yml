@@ -20,8 +20,9 @@ permissions:
 env:
   IMAGE_NAME: openresty
   # DOCKER_REPO: bailangvvking/go-wrk
-  DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
   IMAGE_TAG: latest
+
+# 在jobs中使用的时候动态拼接DOCKER_REPO
 
 jobs:
   build-and-push:
@@ -74,14 +75,14 @@ jobs:
               linux/amd64
           push: true
           tags: |
-            ${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           # 禁用缓存，确保每次构建都是全新的
           cache: false
 
       - name: Output image info
         run: |
           echo "Image built and pushed successfully"
-          echo "Repository: ${{ env.DOCKER_REPO }}"
+          echo "Repository: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
           echo "Tag: ${{ env.IMAGE_TAG }}"
 
       - name: Scan image for vulnerabilities
