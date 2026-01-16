@@ -106,8 +106,8 @@ RUN  set -eux && apk add --no-cache \
     --modules-path=/usr/local/nginx/modules \
     --sbin-path=/usr/local/nginx/sbin/nginx \
     --conf-path=/usr/local/nginx/conf/nginx.conf \
-    --error-log-path=/data/logs/error.log \
-    --http-log-path=/data/logs/access.log \
+    --error-log-path=/usr/local/nginx/logs/error.log \
+    --http-log-path=/usr/local/nginx/logs/access.log \
     # --with-cc-opt="-static -O3 -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
     # --with-ld-opt="-static -Wl,--export-dynamic" \
     --with-cc-opt="-O3 -DNGX_LUA_ABORT_AT_PANIC" \
@@ -122,6 +122,7 @@ RUN  set -eux && apk add --no-cache \
     --with-stream_ssl_module \
     --with-stream_ssl_preread_module \
     --with-http_v2_module \
+    --with-ipv6 \
     --without-mail_pop3_module \
     --without-mail_imap_module \
     --without-mail_smtp_module \
@@ -223,19 +224,26 @@ COPY --from=builder /usr/local/bin/openresty /usr/local/bin/
 COPY --from=builder /usr/local/luajit/bin/luajit /usr/local/bin/
 
 # 软连接库路径等操作
-RUN mkdir -p /usr/local/lib \
+RUN mkdir -p /usr/local/lib /var/run/openresty /usr/local/nginx/logs \
     && ln -sf /usr/local/luajit/lib/libluajit-5.1.so.2 /usr/local/lib/ \
-    && ln -sf /usr/local/luajit/lib/libluajit-5.1.so.2.1.ROLLING /usr/local/lib/
+    && ln -sf /usr/local/luajit/lib/libluajit-5.1.so.2.1.ROLLING /usr/local/lib/ \
+    && ln -sf /dev/stdout /usr/local/nginx/logs/access.log \
+    && ln -sf /dev/stderr /usr/local/nginx/logs/error.log
 
-ENV PATH="/usr/local/nginx/sbin:/usr/local/bin:$PATH"
+# 按照官方标准配置环境变量
+# ENV PATH="/usr/local/nginx/sbin:/usr/local/bin:$PATH"
+ENV PATH=$PATH:/usr/local/luajit/bin:/usr/local/nginx/sbin:/usr/local/bin
 ENV LUA_PATH="/usr/local/lualib/?.lua;;"
 ENV LUA_CPATH="/usr/local/lualib/?.so;;"
 ENV LD_LIBRARY_PATH="/usr/local/luajit/lib:$LD_LIBRARY_PATH"
 
 WORKDIR /usr/local/nginx
 
-RUN mkdir -p /data/logs && chown -R nobody:nobody /data/logs /usr/local/nginx
+RUN chown -R nobody:nobody /usr/local/nginx /var/run/openresty
 
 USER nobody
 
 CMD ["nginx", "-g", "daemon off;"]
+
+# 使用SIGQUIT替代默认SIGTERM，更干净地处理请求
+STOPSIGNAL SIGQUIT
