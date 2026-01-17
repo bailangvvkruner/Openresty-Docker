@@ -253,22 +253,25 @@ RUN set -eux && apk add --no-cache \
     make -j$(nproc) V=1 && \
     make -j$(nproc) install \
     && \
-    # strip /usr/local/nginx/sbin/nginx
-    strip /usr/local/nginx/sbin/nginx && \
-    # strip /usr/local/luajit/bin/luajit || true && \
-    strip /usr/local/luajit/bin/luajit && \
-    # strip /usr/local/luajit/lib/libluajit-5.1.so.2 || true && \
-    strip /usr/local/luajit/lib/libluajit-5.1.so.2 && \
-    # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
-    # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
-    find /usr/local/nginx/modules -name '*.so' -exec strip {} \; && \
-    # find /usr/local/lualib -name '*.so' -exec strip {} \; || true && \
-    find /usr/local/lualib -name '*.so' -exec strip {} \; && \
+    # # strip /usr/local/nginx/sbin/nginx
+    # strip /usr/local/nginx/sbin/nginx && \
+    # # strip /usr/local/luajit/bin/luajit || true && \
+    # strip /usr/local/luajit/bin/luajit && \
+    # # strip /usr/local/luajit/lib/libluajit-5.1.so.2 || true && \
+    # strip /usr/local/luajit/lib/libluajit-5.1.so.2 && \
+    # # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
+    # # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
+    # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; && \
+    # # find /usr/local/lualib -name '*.so' -exec strip {} \; || true && \
+    # find /usr/local/lualib -name '*.so' -exec strip {} \; && \
+    find / -name '*' -exec strip {} \; && \
+    # find / -name '*.*' -exec strip {} \; && \
     \
-    upx --best --lzma /usr/local/nginx/sbin/nginx && \
-    upx --best --lzma /usr/local/luajit/bin/luajit && \
-    upx --best --lzma /usr/local/luajit/lib/libluajit-5.1.so.2 && \
-    find / -name '*.so' -exec upx --best --lzma {} \; && \
+    # upx --best --lzma /usr/local/nginx/sbin/nginx && \
+    # upx --best --lzma /usr/local/luajit/bin/luajit && \
+    # upx --best --lzma /usr/local/luajit/lib/libluajit-5.1.so.2 && \
+    # find / -name '*.so' -exec upx --best --lzma {} \; && \
+    find / -name '*' -exec upx --best --lzma {} \; && \
     \
     echo "Done"
 
