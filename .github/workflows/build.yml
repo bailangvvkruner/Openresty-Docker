@@ -64,14 +64,14 @@ jobs:
           #     linux/mips64le
           #     linux/s390x
 
-          # platforms: |
-          #     linux/386
-          #     linux/amd64
-          #     linux/arm/v6
-          #     linux/arm/v7
-          #     linux/arm64/v8
           platforms: |
+              linux/386
               linux/amd64
+              linux/arm/v6
+              linux/arm/v7
+              linux/arm64/v8
+          # platforms: |
+          #     linux/amd64
           # push: true
           push: false
           load: true  # 添加这一行，将镜像加载到本地
