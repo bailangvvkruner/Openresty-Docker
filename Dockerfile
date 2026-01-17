@@ -264,14 +264,19 @@ RUN set -eux && apk add --no-cache \
     # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; && \
     # # find /usr/local/lualib -name '*.so' -exec strip {} \; || true && \
     # find /usr/local/lualib -name '*.so' -exec strip {} \; && \
-    find / -name '*' -exec strip {} \; && \
-    # find / -name '*.*' -exec strip {} \; && \
+    find /usr/local/nginx -name '*' -exec strip {} \; && \
+    find /usr/local/luajit -name '*' -exec strip {} \; && \
+    find /usr/local/lualib -name '*' -exec strip {} \; || true && \
     \
     # upx --best --lzma /usr/local/nginx/sbin/nginx && \
     # upx --best --lzma /usr/local/luajit/bin/luajit && \
     # upx --best --lzma /usr/local/luajit/lib/libluajit-5.1.so.2 && \
     # find / -name '*.so' -exec upx --best --lzma {} \; && \
-    find / -name '*' -exec upx --best --lzma {} \; && \
+    find /usr/local/nginx -name '*' -exec upx --best --lzma {} \; && \
+    find /usr/local/luajit -name '*' -exec upx --best --lzma {} \; && \
+    find /usr/local/lualib -name '*' -exec upx --best --lzma {} \; || true && \
+    upx --best --lzma /usr/local/bin/openresty || true && \
+    upx --best --lzma /usr/local/luajit/bin/luajit || true && \
     \
     echo "Done"
 
