@@ -22,8 +22,8 @@ RUN set -eux && apk add --no-cache \
     libtool \
     make \
     cmake \
-    gcc \
-    g++ \
+    # gcc \
+    # g++ \
     tree \
     && \
     # 工作路径 替代 WORKDIR /tmp
@@ -249,8 +249,8 @@ RUN set -eux && apk add --no-cache \
     
     && \
     # 按照官方推荐使用多核编译
-    # make -j$(nproc) && \
-    make -j$(nproc) V=1 && \
+    make -j$(nproc) && \
+    # make -j$(nproc) V=1 && \
     make -j$(nproc) install \
     && \
     # # strip /usr/local/nginx/sbin/nginx
