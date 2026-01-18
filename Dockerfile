@@ -142,14 +142,12 @@ RUN set -eux && apk add --no-cache \
     --conf-path=/usr/local/nginx/conf/nginx.conf \
     --error-log-path=/usr/local/nginx/logs/error.log \
     --http-log-path=/usr/local/nginx/logs/access.log \
-    # --with-cc-opt="-static -O3 -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
-    # --with-ld-opt="-static -Wl,--export-dynamic" \
+    --with-cc-opt="-static -O3 -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
+    --with-ld-opt="-static -Wl,--export-dynamic" \
     # --with-cc-opt="-O3 -DNGX_LUA_ABORT_AT_PANIC" \
     # --with-ld-opt="-Wl,--export-dynamic" \
     # --with-cc-opt="-O3 -flto -static -static-libgcc -I/usr/local/brotli/include -I/usr/local/zstd/include" \
     # --with-ld-opt="-flto -static -L/usr/local/brotli/lib -L/usr/local/zstd/lib" \
-    --with-cc-opt="-static -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer -fno-exceptions -fno-rtti -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
-    --with-ld-opt="-static -flto -Wl,--export-dynamic -Wl,--gc-sections -Wl,--strip-all" \
     --with-openssl=../openssl-${OPENSSL_VERSION} \
     --with-zlib=../zlib-${ZLIB_VERSION} \
     # 狗屎的Trae把PCRE老加上 都2版本了
@@ -178,8 +176,7 @@ RUN set -eux && apk add --no-cache \
     --with-compat \
     --with-stream=dynamic \
     --with-http_ssl_module \
-    # --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_GC64' \
-    --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_GC64 -DLUAJIT_ENABLE_LUA52COMPAT -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer' \
+    --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_GC64' \
     # 优化双精度浮点数性能的编译选项
     # --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_LUA52COMPAT -DLUAJIT_ENABLE_GC64' \
     # 官方推荐：在configure中直接使用多核
