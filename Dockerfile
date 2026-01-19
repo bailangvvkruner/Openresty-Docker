@@ -156,8 +156,9 @@ RUN set -eux && apk add --no-cache \
     # -xHost: 编译时使用当前CPU支持的指令集，但二进制可在兼容CPU上运行
     # -march=x86-64-v3: 支持Broadwell及更新CPU（AVX2, BMI2, F16C, FMA, LZCNT, MOVBE, XSAVE）
     --with-cc-opt="-static -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer -fno-exceptions -fno-rtti -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
-    # --with-cc-opt="-static -O3 -march=x86-64-v3 -mtune=generic -flto -ffat-lto-objects -fomit-frame-pointer -fno-exceptions -fno-rtti -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
-    --with-ld-opt="-static -flto -Wl,--export-dynamic -Wl,--gc-sections -Wl,--strip-all" \
+    # --with-cc-opt="-static -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer -fno-exceptions -fno-rtti -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
+    # 注意：不要使用--strip-all，否则会移除LuaJIT FFI需要的符号，导致resty.core加载失败
+    --with-ld-opt="-static -flto -Wl,--export-dynamic -Wl,--gc-sections" \
     --with-openssl=../openssl-${OPENSSL_VERSION} \
     --with-zlib=../zlib-${ZLIB_VERSION} \
     # 狗屎的Trae把PCRE老加上 都2版本了
@@ -281,8 +282,8 @@ RUN set -eux && apk add --no-cache \
     # find /usr/local/luajit -name '*' -exec strip {} \; && \
     # find /usr/local/lualib -name '*' -exec strip {} \; || true && \
     strip --strip-unneeded /usr/local/nginx/sbin/nginx 2>/dev/null || true && \
-    strip --strip-unneeded /usr/local/bin/openresty 2>/dev/null || true && \
-    strip --strip-unneeded /usr/local/luajit/bin/luajit 2>/dev/null || true && \
+    # strip --strip-unneeded /usr/local/bin/openresty 2>/dev/null || true && \
+    # strip --strip-unneeded /usr/local/luajit/bin/luajit 2>/dev/null || true && \
     \
     # 保留.so模块的符号表，因为LuaJIT FFI需要这些符号
     # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
