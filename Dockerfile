@@ -149,7 +149,14 @@ RUN set -eux && apk add --no-cache \
     # --with-ld-opt="-Wl,--export-dynamic" \
     # --with-cc-opt="-O3 -flto -static -static-libgcc -I/usr/local/brotli/include -I/usr/local/zstd/include" \
     # --with-ld-opt="-flto -static -L/usr/local/brotli/lib -L/usr/local/zstd/lib" \
+    # --with-cc-opt="-static -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer -fno-exceptions -fno-rtti -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
+    # 优化编译选项（在PVE/KVM环境中安全性优化）
+    # 注意：不要使用-march=native，因为会导致跨CPU迁移时的Illegal instruction错误
+    # 建议使用-xHost（Intel）或-march=x86-64-v3（通用）代替
+    # -xHost: 编译时使用当前CPU支持的指令集，但二进制可在兼容CPU上运行
+    # -march=x86-64-v3: 支持Broadwell及更新CPU（AVX2, BMI2, F16C, FMA, LZCNT, MOVBE, XSAVE）
     --with-cc-opt="-static -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer -fno-exceptions -fno-rtti -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
+    # --with-cc-opt="-static -O3 -march=x86-64-v3 -mtune=generic -flto -ffat-lto-objects -fomit-frame-pointer -fno-exceptions -fno-rtti -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
     --with-ld-opt="-static -flto -Wl,--export-dynamic -Wl,--gc-sections -Wl,--strip-all" \
     --with-openssl=../openssl-${OPENSSL_VERSION} \
     --with-zlib=../zlib-${ZLIB_VERSION} \
