@@ -240,12 +240,16 @@ RUN set -eux \
     make install \
     && \
     # strip /usr/local/nginx/sbin/nginx
+    # strip /usr/local/bin/openresty && \
     strip /usr/local/nginx/sbin/nginx && \
     strip /usr/local/luajit/bin/luajit && \
     strip /usr/local/luajit/lib/libluajit-5.1.so.2 && \
     # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; && \
     find /usr/local/nginx -name '*.so' -exec strip {} \; && \
     find /usr/local/lualib -name '*.so' -exec strip {} \; && \
+    \
+    upx --best --lzma /usr/local/nginx/sbin/nginx && \
+    upx --best --lzma /usr/local/luajit/bin/luajit && \
     \
     echo "Done"
 
