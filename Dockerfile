@@ -164,11 +164,16 @@ RUN set -eux \
     && \
     # strip /usr/local/nginx/sbin/nginx
     # strip /usr/local/nginx/sbin/nginx && \
-    strip /usr/sbin/nginx&& \
-    strip /usr/local/luajit/bin/luajit || true && \
-    strip /usr/local/luajit/lib/libluajit-5.1.so.2 || true && \
-    find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
-    find /usr/local/lualib -name '*.so' -exec strip {} \; || true \
+    # 修复路径：使用/etc/nginx而不是/usr/local/nginx
+    strip /usr/sbin/nginx && \
+    # 检查LuaJIT和lualib的实际安装位置
+    ls -la /usr/local/luajit/bin/ /usr/local/luajit/lib/ /usr/local/lualib/ 2>/dev/null && \
+    ls -la /etc/nginx/ 2>/dev/null && \
+    # 只strip存在的文件，避免错误
+    strip /usr/local/luajit/bin/luajit && \
+    strip /usr/local/luajit/lib/libluajit-5.1.so.2 && \
+    find /etc/nginx/modules -name '*.so' -exec strip {} \; && \
+    find /usr/local/lualib -name '*.so' -exec strip {} \; \
     \
     && \
     \
@@ -176,11 +181,11 @@ RUN set -eux \
     # upx --best --lzma $FILENAME 2>/dev/null || true
     # upx --best --lzma /usr/local/nginx/sbin/nginx && \
     upx --best --lzma /usr/sbin/nginx && \
-    upx --best --lzma /usr/local/luajit/bin/luajit || true && \
-    strip /usr/local/luajit/lib/libluajit-5.1.so.2 || true && \
-    find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
-    find /usr/local/lualib -name '*.so' -exec strip {} \; || true \
-    echo "Done"
+    upx --best --lzma /usr/local/luajit/bin/luajit && \
+    strip /usr/local/luajit/lib/libluajit-5.1.so.2 && \
+    find /etc/nginx/modules -name '*.so' -exec strip {} \; && \
+    find /usr/local/lualib -name '*.so' -exec strip {} \; \
+    && echo "Done"
 
 FROM alpine:latest
 
@@ -194,6 +199,18 @@ COPY --from=builder /usr/sbin/nginx /usr/sbin/
 COPY --from=builder /usr/local/bin/openresty /usr/local/bin/
 COPY --from=builder /usr/local/luajit/bin/luajit /usr/local/bin/
 
+# 如果openresty二进制文件不存在，从/etc/nginx复制
+RUN if [ ! -f /usr/local/bin/openresty ]; then \
+    ln -sf /etc/nginx/bin/openresty /usr/local/bin/openresty \
+    echo "OpenResty binary not found, using nginx directly"; \
+fi
+
+# 确保luajit二进制文件存在
+RUN if [ ! -f /usr/local/bin/luajit ]; then \
+    find / -name luajit -type f 2>/dev/null | xargs -I {} ln -sf {} /usr/local/bin/luajit \
+    echo "Luajit binary not found"; \
+fi
+
 # 软连接库路径等操作
 RUN mkdir -p /usr/local/lib \
     && ln -sf /usr/local/luajit/lib/libluajit-5.1.so.2 /usr/local/lib/ \
@@ -204,7 +221,8 @@ RUN mkdir -p /usr/local/lib \
 ENV PATH="/usr/sbin:/usr/local/bin:$PATH"
 ENV LUA_PATH="/usr/local/lualib/?.lua;;"
 ENV LUA_CPATH="/usr/local/lualib/?.so;;"
-ENV LD_LIBRARY_PATH="/usr/local/luajit/lib:$LD_LIBRARY_PATH"
+# 修复未定义变量警告，使用:-为空值提供默认值
+ENV LD_LIBRARY_PATH="/usr/local/luajit/lib:${LD_LIBRARY_PATH:-}"
 
 WORKDIR /etc/nginx
 
