@@ -104,27 +104,40 @@ RUN set -eux \
     make -j$(nproc) && \
     make install PREFIX=/usr/local/zstd && \
     cd /tmp && \
+    # cd openresty-${OPENRESTY_VERSION} && \
+    # ./configure \
+    #   --prefix=/etc/openresty \
+    #   --user=root \
+    #   --group=root \
+    #   --with-cc-opt="-static -static-libgcc" \
+    #   --with-ld-opt="-static" \
+    #   --with-openssl=../openssl-${OPENSSL_VERSION} \
+    #   --with-zlib=../zlib-${ZLIB_VERSION} \
+    #   --with-pcre \
+    #   --with-pcre-jit \
+    #   --with-http_ssl_module \
+    #   --with-http_v2_module \
+    #   --with-http_gzip_static_module \
+    #   --with-http_stub_status_module \
+    #   --without-http_rewrite_module \
+    #   --without-http_auth_basic_module \
+    #   --with-threads && \
+    # make -j$(nproc) && \
+    # make install \
+  
     cd openresty-${OPENRESTY_VERSION} && \
     # 申明两个模块路径
     export ZSTD_INC=/usr/local/zstd/include && \
     export ZSTD_LIB=/usr/local/zstd/lib && \
     ./configure \
-    # --prefix=/usr/local \
-    # --modules-path=/usr/local/nginx/modules \
-    # --sbin-path=/usr/local/nginx/sbin/nginx \
-    # --conf-path=/usr/local/nginx/conf/nginx.conf \
-    # --error-log-path=/usr/local/nginx/logs/error.log \
-    # --http-log-path=/usr/local/nginx/logs/access.log \
-    # # --with-cc-opt="-static -O3 -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
-    # # --with-ld-opt="-static -Wl,--export-dynamic" \
-    --prefix=/etc/nginx \
-    --modules-path=/etc/nginx/modules \
-    --sbin-path=/usr/sbin/nginx \
-    --conf-path=/etc/nginx/nginx.conf \
-    --error-log-path=/var/log/nginx/error.log \
-    --http-log-path=/var/log/nginx/access.log \
-    --pid-path=/var/run/nginx.pid \
-    --lock-path=/var/run/nginx.lock \
+    --prefix=/usr/local \
+    --modules-path=/usr/local/nginx/modules \
+    --sbin-path=/usr/local/nginx/sbin/nginx \
+    --conf-path=/usr/local/nginx/conf/nginx.conf \
+    --error-log-path=/usr/local/nginx/logs/error.log \
+    --http-log-path=/usr/local/nginx/logs/access.log \
+    # --with-cc-opt="-static -O3 -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
+    # --with-ld-opt="-static -Wl,--export-dynamic" \
     --with-cc-opt="-O3 -DNGX_LUA_ABORT_AT_PANIC" \
     --with-ld-opt="-Wl,--export-dynamic" \
     --with-openssl=../openssl-${OPENSSL_VERSION} \
@@ -158,75 +171,109 @@ RUN set -eux \
     --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_GC64 -DLUAJIT_ENABLE_LUA52COMPAT -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer' \
     # 官方推荐：在configure中直接使用多核
     -j$(nproc) \
+    # --with-debug \
+    # --with-lua_resty_core \
+    # --with-lua_resty_lrucache \
+    # --with-lua_resty_lock \
+    # --without-lua_resty_dns \
+    # --without-lua_resty_memcached \
+    # --without-lua_redis_parser \
+    # --without-lua_rds_parser \
+    # --without-lua_resty_redis \
+    # --without-lua_resty_mysql \
+    # --without-lua_resty_upload \
+    # --without-lua_resty_upstream_healthcheck \
+    # --without-lua_resty_string \
+    # --without-lua_resty_websocket \
+    # --without-lua_resty_limit_traffic \
+    # --without-lua_resty_lrucache \
+    # --without-lua_resty_lock \
+    # --without-lua_resty_signal \
+    # --without-lua_resty_lrucache \
+    # --without-lua_resty_shell \
+    # --without-lua_resty_core \
+    # --without-select_module \
+    # --without-lua_resty_mysql \
+    # --without-http_charset_module \
+    # --without-http_ssi_module \
+    # --without-http_userid_module \
+    # --without-http_auth_basic_module \
+    # --without-http_mirror_module \
+    # --without-http_autoindex_module \
+    # --without-http_split_clients_module \
+    # --without-http_memcached_module \
+    # --without-http_empty_gif_module \
+    # --without-http_browser_module \
+    # --without-stream_limit_conn_module \
+    # --without-stream_geo_module \
+    # --without-stream_map_module \
+    # --without-stream_split_clients_module \
+    # --without-stream_return_module \
+    # cd openresty-${OPENRESTY_VERSION} && \
+    # ./configure \
+    # --prefix=/usr/local/openresty \
+    # --with-luajit \
+    # --with-pcre-jit \
+    # --with-ipv6 \
+    # --with-http_ssl_module \
+    # --with-http_realip_module \
+    # --with-http_addition_module \
+    # --with-http_sub_module \
+    # --with-http_dav_module \
+    # --with-http_flv_module \
+    # --with-http_mp4_module \
+    # --with-http_gunzip_module \
+    # --with-http_gzip_static_module \
+    # --with-http_auth_request_module \
+    # --with-http_random_index_module \
+    # --with-http_secure_link_module \
+    # --with-http_stub_status_module \
+    # --with-http_v2_module \
+    # --with-stream \
+    # --with-stream_ssl_module \
+    # --with-stream_ssl_preread_module \
+    # --with-stream_realip_module \
+    # --with-threads \
+    # --with-file-aio
     && \
     make -j$(nproc) && \
     make install \
     && \
     # strip /usr/local/nginx/sbin/nginx
-    # strip /usr/local/nginx/sbin/nginx && \
-    # 修复路径：使用/etc/nginx而不是/usr/local/nginx
-    strip /usr/sbin/nginx && \
-    # 检查LuaJIT和lualib的实际安装位置
-    ls -la /usr/local/luajit/bin/ /usr/local/luajit/lib/ /usr/local/lualib/ 2>/dev/null && \
-    ls -la /etc/nginx/ 2>/dev/null && \
-    # 只strip存在的文件，避免错误
+    strip /usr/local/nginx/sbin/nginx && \
     strip /usr/local/luajit/bin/luajit && \
     strip /usr/local/luajit/lib/libluajit-5.1.so.2 && \
-    find /etc/nginx/modules -name '*.so' -exec strip {} \; && \
-    find /usr/local/lualib -name '*.so' -exec strip {} \; \
+    find /usr/local/nginx/modules -name '*.so' -exec strip {} \; && \
+    find /usr/local/lualib -name '*.so' -exec strip {} \; && \
     \
-    && \
-    \
-    tree /tmp && \
-    # upx --best --lzma $FILENAME 2>/dev/null || true
-    # upx --best --lzma /usr/local/nginx/sbin/nginx && \
-    upx --best --lzma /usr/sbin/nginx && \
-    upx --best --lzma /usr/local/luajit/bin/luajit && \
-    strip /usr/local/luajit/lib/libluajit-5.1.so.2 && \
-    find /etc/nginx/modules -name '*.so' -exec strip {} \; && \
-    find /usr/local/lualib -name '*.so' -exec strip {} \; \
-    && echo "Done"
+    echo "Done"
 
 FROM alpine:latest
 
 RUN apk add --no-cache libgcc
 
 # 复制之前编译好的 openresty, luajit 等文件
-COPY --from=builder /etc/nginx /etc/nginx
+COPY --from=builder /usr/local/nginx /usr/local/nginx
 COPY --from=builder /usr/local/luajit /usr/local/luajit
 COPY --from=builder /usr/local/lualib /usr/local/lualib
-COPY --from=builder /usr/sbin/nginx /usr/sbin/
 COPY --from=builder /usr/local/bin/openresty /usr/local/bin/
 COPY --from=builder /usr/local/luajit/bin/luajit /usr/local/bin/
-
-# 如果openresty二进制文件不存在，从/etc/nginx复制
-RUN if [ ! -f /usr/local/bin/openresty ]; then \
-    ln -sf /etc/nginx/bin/openresty /usr/local/bin/openresty \
-    echo "OpenResty binary not found, using nginx directly"; \
-fi
-
-# 确保luajit二进制文件存在
-RUN if [ ! -f /usr/local/bin/luajit ]; then \
-    find / -name luajit -type f 2>/dev/null | xargs -I {} ln -sf {} /usr/local/bin/luajit \
-    echo "Luajit binary not found"; \
-fi
 
 # 软连接库路径等操作
 RUN mkdir -p /usr/local/lib \
     && ln -sf /usr/local/luajit/lib/libluajit-5.1.so.2 /usr/local/lib/ \
     && ln -sf /usr/local/luajit/lib/libluajit-5.1.so.2.1.ROLLING /usr/local/lib/ \
-    && ln -sf /dev/stdout /var/log/nginx/access.log \
-    && ln -sf /dev/stderr /var/log/nginx/error.log
+    && ln -sf /dev/stdout /usr/local/nginx/logs/access.log \
+    && ln -sf /dev/stderr /usr/local/nginx/logs/error.log
 
-ENV PATH="/usr/sbin:/usr/local/bin:$PATH"
+ENV PATH="/usr/local/nginx/sbin:/usr/local/bin:$PATH"
 ENV LUA_PATH="/usr/local/lualib/?.lua;;"
 ENV LUA_CPATH="/usr/local/lualib/?.so;;"
-# 修复未定义变量警告，使用:-为空值提供默认值
-ENV LD_LIBRARY_PATH="/usr/local/luajit/lib:${LD_LIBRARY_PATH:-}"
+ENV LD_LIBRARY_PATH="/usr/local/luajit/lib:$LD_LIBRARY_PATH"
 
-WORKDIR /etc/nginx
+WORKDIR /usr/local/nginx
 
-RUN mkdir -p /var/log/nginx && chown -R nobody:nobody /var/log/nginx /etc/nginx
+RUN mkdir -p /data/logs && chown -R nobody:nobody /data/logs /usr/local/nginx
 
 USER nobody
 
