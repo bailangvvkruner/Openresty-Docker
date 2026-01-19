@@ -163,7 +163,8 @@ RUN set -eux \
     make install \
     && \
     # strip /usr/local/nginx/sbin/nginx
-    strip /usr/local/nginx/sbin/nginx && \
+    # strip /usr/local/nginx/sbin/nginx && \
+    strip /usr/sbin/nginx&& \
     strip /usr/local/luajit/bin/luajit || true && \
     strip /usr/local/luajit/lib/libluajit-5.1.so.2 || true && \
     find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
@@ -172,7 +173,8 @@ RUN set -eux \
     && \
     \
     # upx --best --lzma $FILENAME 2>/dev/null || true
-    upx --best --lzma /usr/local/nginx/sbin/nginx && \
+    # upx --best --lzma /usr/local/nginx/sbin/nginx && \
+    upx --best --lzma /usr/sbin/nginx && \
     upx --best --lzma /usr/local/luajit/bin/luajit || true && \
     strip /usr/local/luajit/lib/libluajit-5.1.so.2 || true && \
     find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
