@@ -8,7 +8,7 @@ RUN set -eux \
     && apk add --no-cache --no-scripts --virtual .build-deps \
     build-base \
     curl \
-    pcre-dev \
+    pcre2-dev \
     zlib-dev \
     linux-headers \
     perl \
@@ -145,8 +145,8 @@ RUN set -eux \
     # --with-pcre=../pcre-${PCRE_VERSION} \
     --with-pcre=../pcre2-${PCRE2_VERSION} \
     # # 两压缩模块
-    # --add-module=../ngx_brotli \
-    # --add-module=../zstd-nginx-module \
+    --add-module=../ngx_brotli \
+    --add-module=../zstd-nginx-module \
     --with-ipv6 \
     --with-pcre-jit \
     --with-stream \
