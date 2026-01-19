@@ -27,9 +27,10 @@ RUN set -eux \
     binutils \
     && \
     # 尝试安装 upx，如果不可用则继续（某些架构可能不支持）
-    && apk add --no-cache --no-scripts --virtual .upx-deps \
+    apk add --no-cache --no-scripts --virtual .upx-deps \
         upx 2>/dev/null || echo "upx not available, skipping compression" \
     \
+    && \
     # 工作路径 替代 WORKDIR /tmp
     cd /tmp && \
     # OPENRESTY_VERSION=$(wget --timeout 10 -q -O - https://openresty.org/en/download.html | grep -oE 'openresty-[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -d'-' -f2) \
@@ -146,6 +147,7 @@ RUN set -eux \
     # # 两压缩模块
     # --add-module=../ngx_brotli \
     # --add-module=../zstd-nginx-module \
+    --with-ipv6 \
     --with-pcre-jit \
     --with-stream \
     --user=nobody \
