@@ -172,6 +172,7 @@ RUN set -eux \
     \
     && \
     \
+    tree /tmp && \
     # upx --best --lzma $FILENAME 2>/dev/null || true
     # upx --best --lzma /usr/local/nginx/sbin/nginx && \
     upx --best --lzma /usr/sbin/nginx && \
