@@ -4,7 +4,7 @@ FROM alpine:latest AS builder
 WORKDIR /build
 
 # 安装构建依赖
-RUN set -eux && apk add --no-cache \
+RUN  set -eux && apk add --no-cache \
     build-base \
     curl \
     pcre-dev \
@@ -20,14 +20,9 @@ RUN set -eux && apk add --no-cache \
     autoconf \
     automake \
     libtool \
-    make \
     cmake \
-    # gcc \
-    # g++ \
     tree \
     && \
-    # 工作路径 替代 WORKDIR /tmp
-    cd /tmp && \
     # OPENRESTY_VERSION=$(wget --timeout 10 -q -O - https://openresty.org/en/download.html | grep -oE 'openresty-[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -d'-' -f2) \
     OPENRESTY_VERSION=$(wget --timeout=10 -q -O - https://openresty.org/en/download.html \
     | grep -ioE 'openresty [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' \
@@ -36,10 +31,12 @@ RUN set -eux && apk add --no-cache \
     && \
     OPENSSL_VERSION=$(wget -q -O - https://www.openssl.org/source/ | grep -oE 'openssl-[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -d'-' -f2) \
     && \
-    ZLIB_VERSION=$(wget -q -O - https://zlib.net/ | grep -oE 'zlib-[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -d'-' -f2) \
-    # ZLIB_VERSION=$(curl -sL https://github.com/madler/zlib/releases/latest | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -c2-) \
+    # ZLIB_VERSION=$(wget -q -O - https://zlib.net/ | grep -oE 'zlib-[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -d'-' -f2) \
+    ZLIB_VERSION=$(curl -sL https://github.com/madler/zlib/releases/latest | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -c2-) \
     && \
     ZSTD_VERSION=$(curl -Ls https://github.com/facebook/zstd/releases/latest | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -c2-) \
+    && \
+    CORERULESET_VERSION=$(curl -s https://api.github.com/repos/coreruleset/coreruleset/releases/latest | grep -oE '"tag_name": "[^"]+' | cut -d'"' -f4 | sed 's/v//') \
     && \
     CORERULESET_VERSION=$(curl -s https://api.github.com/repos/coreruleset/coreruleset/releases/latest | grep -oE '"tag_name": "[^"]+' | cut -d'"' -f4 | sed 's/v//') \
     && \
@@ -65,18 +62,6 @@ RUN set -eux && apk add --no-cache \
     echo "NGX_BROTLI_VERSION=${NGX_BROTLI_VERSION}" && \
     echo "BROTLI_VERSION=${BROTLI_VERSION}" && \
     \
-    # fallback 以防 curl/grep 失败
-    OPENRESTY_VERSION="${OPENRESTY_VERSION:-1.21.4.1}" && \
-    OPENSSL_VERSION="${OPENSSL_VERSION:-3.3.0}" && \
-    ZLIB_VERSION="${ZLIB_VERSION:-1.3.1}" && \
-    ZSTD_VERSION="${ZSTD_VERSION:-1.5.7}" && \
-    CORERULESET_VERSION="${CORERULESET_VERSION:-4.15.0}" && \
-    PCRE_VERSION="${PCRE_VERSION:-8.45}" && \
-    NGX_BROTLI_VERSION="${NGX_BROTLI_VERSION:-1.0.0}" && \
-    BROTLI_VERSION="${BROTLI_VERSION:-1.2.0}" && \
-    \
-    echo "==> Using versions: openresty-${OPENRESTY_VERSION}, openssl-${OPENSSL_VERSION}, zlib-${ZLIB_VERSION}, ZSTD_VERSION-${ZSTD_VERSION}, CORERULESET_VERSION-${CORERULESET_VERSION}, CORERULESET_VERSION-${CORERULESET_VERSION}" && \
-    \
     curl -fSL https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz -o openresty.tar.gz && \
     # curl -fSL https://github.com/openresty/openresty/releases/download/v${OPENRESTY_VERSION}/openresty-${OPENRESTY_VERSION}.tar.gz  && \
     tar xzf openresty.tar.gz && \
@@ -84,6 +69,8 @@ RUN set -eux && apk add --no-cache \
     curl -fSL https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz -o openssl.tar.gz && \
     tar xzf openssl.tar.gz && \
     \
+    # curl -fSL https://fossies.org/linux/misc/zlib-${ZLIB_VERSION}.tar.gz -o zlib.tar.gz && \
+    # tar xzf zlib.tar.gz && \
     curl -fSL https://github.com/madler/zlib/releases/download/v${ZLIB_VERSION}/zlib-${ZLIB_VERSION}.tar.gz -o zlib.tar.gz && \
     tar xzf zlib.tar.gz && \
     \
@@ -94,9 +81,6 @@ RUN set -eux && apk add --no-cache \
     \
     curl -fSL https://github.com/facebook/zstd/releases/download/v${ZSTD_VERSION}/zstd-${ZSTD_VERSION}.tar.gz -o zstd.tar.gz && \
     tar xzf zstd.tar.gz && \
-    \
-    # tree \
-    # && \
     # zstd模块 brotli模块
     cd /tmp && \
     git clone --depth 1 --recurse-submodules https://github.com/google/ngx_brotli.git && \
@@ -110,7 +94,6 @@ RUN set -eux && apk add --no-cache \
     make -j$(nproc) && \
     make install PREFIX=/usr/local/zstd && \
     cd /tmp && \
-  
     # cd openresty-${OPENRESTY_VERSION} && \
     # ./configure \
     #   --prefix=/etc/openresty \
@@ -145,25 +128,15 @@ RUN set -eux && apk add --no-cache \
     --http-log-path=/usr/local/nginx/logs/access.log \
     # --with-cc-opt="-static -O3 -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
     # --with-ld-opt="-static -Wl,--export-dynamic" \
-    # --with-cc-opt="-O3 -DNGX_LUA_ABORT_AT_PANIC" \
-    # --with-ld-opt="-Wl,--export-dynamic" \
-    # --with-cc-opt="-O3 -flto -static -static-libgcc -I/usr/local/brotli/include -I/usr/local/zstd/include" \
-    # --with-ld-opt="-flto -static -L/usr/local/brotli/lib -L/usr/local/zstd/lib" \
-    # --with-cc-opt="-static -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer -fno-exceptions -fno-rtti -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
-    # 优化编译选项（针对当前CPU优化，性能最大化）
-    # 如果不需要跨CPU迁移，-march=native是最佳选择
-    # 注意：移除LTO优化（-flto），因为LTO+静态编译会导致FFI符号丢失
-    --with-cc-opt="-static -O3 -march=native -mtune=native -fomit-frame-pointer -fno-exceptions -fno-rtti -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
-    # 静态编译，但移除LTO和--strip-all，避免FFI符号丢失
-    --with-ld-opt="-static -Wl,--export-dynamic -Wl,--gc-sections" \
+    --with-cc-opt="-O3 -DNGX_LUA_ABORT_AT_PANIC" \
+    --with-ld-opt="-Wl,--export-dynamic" \
     --with-openssl=../openssl-${OPENSSL_VERSION} \
     --with-zlib=../zlib-${ZLIB_VERSION} \
-    # 狗屎的Trae把PCRE老加上 都2版本了
     # --with-pcre=../pcre-${PCRE_VERSION} \
     --with-pcre=../pcre2-${PCRE2_VERSION} \
-    # 两压缩模块
-    --add-module=../ngx_brotli \
-    --add-module=../zstd-nginx-module \
+    # # 两压缩模块
+    # --add-module=../ngx_brotli \
+    # --add-module=../zstd-nginx-module \
     --with-pcre-jit \
     --with-stream \
     --user=nobody \
@@ -171,7 +144,6 @@ RUN set -eux && apk add --no-cache \
     --with-stream_ssl_module \
     --with-stream_ssl_preread_module \
     --with-http_v2_module \
-    --with-ipv6 \
     --without-mail_pop3_module \
     --without-mail_imap_module \
     --without-mail_smtp_module \
@@ -184,12 +156,8 @@ RUN set -eux && apk add --no-cache \
     --with-compat \
     --with-stream=dynamic \
     --with-http_ssl_module \
-    # 注意：OpenResty默认包含ngx_lua模块，不需要显式添加--with-http_lua_module
-    # --with-http_lua_module \
-    # --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_GC64' \
-    --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_GC64 -DLUAJIT_ENABLE_LUA52COMPAT -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer' \
     # 优化双精度浮点数性能的编译选项
-    # --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_LUA52COMPAT -DLUAJIT_ENABLE_GC64' \
+    --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_GC64 -DLUAJIT_ENABLE_LUA52COMPAT -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer' \
     # 官方推荐：在configure中直接使用多核
     -j$(nproc) \
     # --with-debug \
@@ -230,7 +198,6 @@ RUN set -eux && apk add --no-cache \
     # --without-stream_map_module \
     # --without-stream_split_clients_module \
     # --without-stream_return_module \
-    
     # cd openresty-${OPENRESTY_VERSION} && \
     # ./configure \
     # --prefix=/usr/local/openresty \
@@ -257,48 +224,16 @@ RUN set -eux && apk add --no-cache \
     # --with-stream_realip_module \
     # --with-threads \
     # --with-file-aio
-    
     && \
-    # 按照官方推荐使用多核编译
     make -j$(nproc) && \
-    # make -j$(nproc) V=1 && \
-    make -j$(nproc) install \
+    make install \
     && \
-    # # strip /usr/local/nginx/sbin/nginx
-    # strip /usr/local/nginx/sbin/nginx && \
-    # # strip /usr/local/luajit/bin/luajit || true && \
-    # strip /usr/local/luajit/bin/luajit && \
-    # # strip /usr/local/luajit/lib/libluajit-5.1.so.2 || true && \
-    # strip /usr/local/luajit/lib/libluajit-5.1.so.2 && \
-    # # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
-    # # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
-    # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; && \
-    # # find /usr/local/lualib -name '*.so' -exec strip {} \; || true && \
-    # find /usr/local/lualib -name '*.so' -exec strip {} \; && \
-    # 只strip nginx主程序，保留LuaJIT和模块的FFI符号
-    # 重要：不要strip luajit和.so模块，否则resty.core会因缺少符号而加载失败
-    # find /usr/local/nginx -name '*' -exec strip {} \; && \
-    # find /usr/local/luajit -name '*' -exec strip {} \; && \
-    # find /usr/local/lualib -name '*' -exec strip {} \; || true && \
-    strip --strip-unneeded /usr/local/nginx/sbin/nginx 2>/dev/null || true && \
-    # strip --strip-unneeded /usr/local/bin/openresty 2>/dev/null || true && \
-    # strip --strip-unneeded /usr/local/luajit/bin/luajit 2>/dev/null || true && \
-    \
-    # 保留.so模块的符号表，因为LuaJIT FFI需要这些符号
-    # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
-    # find /usr/local/lualib -name '*.so' -exec strip {} \; || true && \
-    # find /usr/local/luajit -name '*.so' -exec strip {} \; || true && \
-    \
-    # upx --best --lzma /usr/local/nginx/sbin/nginx && \
-    # upx --best --lzma /usr/local/luajit/bin/luajit && \
-    # upx --best --lzma /usr/local/luajit/lib/libluajit-5.1.so.2 && \
-    # find / -name '*.so' -exec upx --best --lzma {} \; && \
-    # 对.so模块不使用upx，因为upx可能会影响LuaJIT FFI功能
-    # find /usr/local/nginx -name '*.so' -exec upx --best --lzma {} \; || true && \
-    # find /usr/local/luajit -name '*.so' -exec upx --best --lzma {} \; || true && \
-    # find /usr/local/lualib -name '*.so' -exec upx --best --lzma {} \; || true && \
-    # upx --best --lzma /usr/local/bin/openresty || true && \
-    # upx --best --lzma /usr/local/luajit/bin/luajit || true && \
+    # strip /usr/local/nginx/sbin/nginx
+    strip /usr/local/nginx/sbin/nginx && \
+    strip /usr/local/luajit/bin/luajit || true && \
+    strip /usr/local/luajit/lib/libluajit-5.1.so.2 || true && \
+    find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
+    find /usr/local/lualib -name '*.so' -exec strip {} \; || true \
     \
     echo "Done"
 
@@ -314,26 +249,21 @@ COPY --from=builder /usr/local/bin/openresty /usr/local/bin/
 COPY --from=builder /usr/local/luajit/bin/luajit /usr/local/bin/
 
 # 软连接库路径等操作
-RUN mkdir -p /usr/local/lib /var/run/openresty /usr/local/nginx/logs \
+RUN mkdir -p /usr/local/lib \
     && ln -sf /usr/local/luajit/lib/libluajit-5.1.so.2 /usr/local/lib/ \
     && ln -sf /usr/local/luajit/lib/libluajit-5.1.so.2.1.ROLLING /usr/local/lib/ \
     && ln -sf /dev/stdout /usr/local/nginx/logs/access.log \
     && ln -sf /dev/stderr /usr/local/nginx/logs/error.log
 
-# 按照官方标准配置环境变量
-# ENV PATH="/usr/local/nginx/sbin:/usr/local/bin:$PATH"
-ENV PATH=$PATH:/usr/local/luajit/bin:/usr/local/nginx/sbin:/usr/local/bin
+ENV PATH="/usr/local/nginx/sbin:/usr/local/bin:$PATH"
 ENV LUA_PATH="/usr/local/lualib/?.lua;;"
 ENV LUA_CPATH="/usr/local/lualib/?.so;;"
 ENV LD_LIBRARY_PATH="/usr/local/luajit/lib:$LD_LIBRARY_PATH"
 
 WORKDIR /usr/local/nginx
 
-RUN chown -R nobody:nobody /usr/local/nginx /var/run/openresty
+RUN mkdir -p /data/logs && chown -R nobody:nobody /data/logs /usr/local/nginx
 
 USER nobody
 
 CMD ["nginx", "-g", "daemon off;"]
-
-# 使用SIGQUIT替代默认SIGTERM，更干净地处理请求
-STOPSIGNAL SIGQUIT
