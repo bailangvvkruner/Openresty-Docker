@@ -20,6 +20,7 @@ env:
   IMAGE_NAME: openresty
   # DOCKER_REPO: bailangvvking/go-wrk
   IMAGE_TAG: latest
+  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
 # 在jobs中使用的时候动态拼接DOCKER_REPO
 
