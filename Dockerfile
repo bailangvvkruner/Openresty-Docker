@@ -268,19 +268,30 @@ RUN set -eux && apk add --no-cache \
     # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; && \
     # # find /usr/local/lualib -name '*.so' -exec strip {} \; || true && \
     # find /usr/local/lualib -name '*.so' -exec strip {} \; && \
-    find /usr/local/nginx -name '*' -exec strip {} \; && \
-    find /usr/local/luajit -name '*' -exec strip {} \; && \
-    find /usr/local/lualib -name '*' -exec strip {} \; || true && \
+    # 只strip nginx主程序，保留LuaJIT和模块的FFI符号
+    # 重要：不要strip luajit和.so模块，否则resty.core会因缺少符号而加载失败
+    # find /usr/local/nginx -name '*' -exec strip {} \; && \
+    # find /usr/local/luajit -name '*' -exec strip {} \; && \
+    # find /usr/local/lualib -name '*' -exec strip {} \; || true && \
+    strip --strip-unneeded /usr/local/nginx/sbin/nginx 2>/dev/null || true && \
+    strip --strip-unneeded /usr/local/bin/openresty 2>/dev/null || true && \
+    strip --strip-unneeded /usr/local/luajit/bin/luajit 2>/dev/null || true && \
+    \
+    # 保留.so模块的符号表，因为LuaJIT FFI需要这些符号
+    # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
+    # find /usr/local/lualib -name '*.so' -exec strip {} \; || true && \
+    # find /usr/local/luajit -name '*.so' -exec strip {} \; || true && \
     \
     # upx --best --lzma /usr/local/nginx/sbin/nginx && \
     # upx --best --lzma /usr/local/luajit/bin/luajit && \
     # upx --best --lzma /usr/local/luajit/lib/libluajit-5.1.so.2 && \
     # find / -name '*.so' -exec upx --best --lzma {} \; && \
-    find /usr/local/nginx -name '*' -exec upx --best --lzma {} \; && \
-    find /usr/local/luajit -name '*' -exec upx --best --lzma {} \; && \
-    find /usr/local/lualib -name '*' -exec upx --best --lzma {} \; || true && \
-    upx --best --lzma /usr/local/bin/openresty || true && \
-    upx --best --lzma /usr/local/luajit/bin/luajit || true && \
+    # 对.so模块不使用upx，因为upx可能会影响LuaJIT FFI功能
+    # find /usr/local/nginx -name '*.so' -exec upx --best --lzma {} \; || true && \
+    # find /usr/local/luajit -name '*.so' -exec upx --best --lzma {} \; || true && \
+    # find /usr/local/lualib -name '*.so' -exec upx --best --lzma {} \; || true && \
+    # upx --best --lzma /usr/local/bin/openresty || true && \
+    # upx --best --lzma /usr/local/luajit/bin/luajit || true && \
     \
     echo "Done"
 
