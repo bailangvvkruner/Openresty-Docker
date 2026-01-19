@@ -104,7 +104,6 @@ RUN set -eux \
     make -j$(nproc) && \
     make install PREFIX=/usr/local/zstd && \
     cd /tmp && \
-  
     cd openresty-${OPENRESTY_VERSION} && \
     # 申明两个模块路径
     export ZSTD_INC=/usr/local/zstd/include && \
@@ -159,7 +158,6 @@ RUN set -eux \
     --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_GC64 -DLUAJIT_ENABLE_LUA52COMPAT -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer' \
     # 官方推荐：在configure中直接使用多核
     -j$(nproc) \
-
     && \
     make -j$(nproc) && \
     make install \
@@ -171,6 +169,14 @@ RUN set -eux \
     find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
     find /usr/local/lualib -name '*.so' -exec strip {} \; || true \
     \
+    && \
+    \
+    # upx --best --lzma $FILENAME 2>/dev/null || true
+    upx --best --lzma /usr/local/nginx/sbin/nginx && \
+    upx --best --lzma /usr/local/luajit/bin/luajit || true && \
+    strip /usr/local/luajit/lib/libluajit-5.1.so.2 || true && \
+    find /usr/local/nginx/modules -name '*.so' -exec strip {} \; || true && \
+    find /usr/local/lualib -name '*.so' -exec strip {} \; || true \
     echo "Done"
 
 FROM alpine:latest
