@@ -150,15 +150,12 @@ RUN set -eux && apk add --no-cache \
     # --with-cc-opt="-O3 -flto -static -static-libgcc -I/usr/local/brotli/include -I/usr/local/zstd/include" \
     # --with-ld-opt="-flto -static -L/usr/local/brotli/lib -L/usr/local/zstd/lib" \
     # --with-cc-opt="-static -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer -fno-exceptions -fno-rtti -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
-    # 优化编译选项（在PVE/KVM环境中安全性优化）
-    # 注意：不要使用-march=native，因为会导致跨CPU迁移时的Illegal instruction错误
-    # 建议使用-xHost（Intel）或-march=x86-64-v3（通用）代替
-    # -xHost: 编译时使用当前CPU支持的指令集，但二进制可在兼容CPU上运行
-    # -march=x86-64-v3: 支持Broadwell及更新CPU（AVX2, BMI2, F16C, FMA, LZCNT, MOVBE, XSAVE）
-    --with-cc-opt="-static -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer -fno-exceptions -fno-rtti -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
-    # --with-cc-opt="-static -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer -fno-exceptions -fno-rtti -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
-    # 注意：不要使用--strip-all，否则会移除LuaJIT FFI需要的符号，导致resty.core加载失败
-    --with-ld-opt="-static -flto -Wl,--export-dynamic -Wl,--gc-sections" \
+    # 优化编译选项（针对当前CPU优化，性能最大化）
+    # 如果不需要跨CPU迁移，-march=native是最佳选择
+    # 注意：移除LTO优化（-flto），因为LTO+静态编译会导致FFI符号丢失
+    --with-cc-opt="-static -O3 -march=native -mtune=native -fomit-frame-pointer -fno-exceptions -fno-rtti -DNGX_LUA_ABORT_AT_PANIC -static-libgcc" \
+    # 静态编译，但移除LTO和--strip-all，避免FFI符号丢失
+    --with-ld-opt="-static -Wl,--export-dynamic -Wl,--gc-sections" \
     --with-openssl=../openssl-${OPENSSL_VERSION} \
     --with-zlib=../zlib-${ZLIB_VERSION} \
     # 狗屎的Trae把PCRE老加上 都2版本了
@@ -187,6 +184,8 @@ RUN set -eux && apk add --no-cache \
     --with-compat \
     --with-stream=dynamic \
     --with-http_ssl_module \
+    # 注意：OpenResty默认包含ngx_lua模块，不需要显式添加--with-http_lua_module
+    # --with-http_lua_module \
     # --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_GC64' \
     --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_GC64 -DLUAJIT_ENABLE_LUA52COMPAT -O3 -march=native -mtune=native -flto -ffat-lto-objects -fomit-frame-pointer' \
     # 优化双精度浮点数性能的编译选项
