@@ -1,10 +1,11 @@
 # FROM alpine:3.20 AS builder
 FROM alpine:latest AS builder
 
-WORKDIR /build
+# WORKDIR /build
 
 # 安装构建依赖
-RUN  set -eux && apk add --no-cache \
+RUN set -eux \
+    && apk add --no-cache --no-scripts --virtual .build-deps \
     build-base \
     curl \
     pcre-dev \
@@ -22,7 +23,15 @@ RUN  set -eux && apk add --no-cache \
     libtool \
     cmake \
     tree \
+    # 包含strip命令
+    binutils \
     && \
+    # 尝试安装 upx，如果不可用则继续（某些架构可能不支持）
+    && apk add --no-cache --no-scripts --virtual .upx-deps \
+        upx 2>/dev/null || echo "upx not available, skipping compression" \
+    \
+    # 工作路径 替代 WORKDIR /tmp
+    cd /tmp && \
     # OPENRESTY_VERSION=$(wget --timeout 10 -q -O - https://openresty.org/en/download.html | grep -oE 'openresty-[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -d'-' -f2) \
     OPENRESTY_VERSION=$(wget --timeout=10 -q -O - https://openresty.org/en/download.html \
     | grep -ioE 'openresty [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' \
