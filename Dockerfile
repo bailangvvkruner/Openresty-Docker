@@ -243,7 +243,8 @@ RUN set -eux \
     strip /usr/local/nginx/sbin/nginx && \
     strip /usr/local/luajit/bin/luajit && \
     strip /usr/local/luajit/lib/libluajit-5.1.so.2 && \
-    find /usr/local/nginx/modules -name '*.so' -exec strip {} \; && \
+    # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; && \
+    find /usr/local/nginx -name '*.so' -exec strip {} \; && \
     find /usr/local/lualib -name '*.so' -exec strip {} \; && \
     \
     echo "Done"
