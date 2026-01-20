@@ -255,7 +255,7 @@ RUN set -eux \
     # 压缩实际的luajit二进制文件而不是符号链接
     upx --best --lzma "$LUAJIT_BIN" && \
     OPENRESTY_BIN=$(readlink -f /usr/local/bin/openresty) && \
-    strip "$OPENRESTY_BIN" && \
+    upx "$OPENRESTY_BIN" && \
     \
     echo "Done"
 
