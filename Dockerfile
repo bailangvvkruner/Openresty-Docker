@@ -252,7 +252,9 @@ RUN set -eux \
     \
     upx --best --lzma /usr/local/nginx/sbin/nginx && \
     # 压缩实际的luajit二进制文件而不是符号链接
-    upx --best --lzma "$LUAJIT_BIN" 2>/dev/null || echo "Skipping luajit upx compression (is symlink)" && \
+    # upx --best --lzma "$LUAJIT_BIN" 2>/dev/null || echo "Skipping luajit upx compression (is symlink)" && \
+    upx --best --lzma /usr/local/luajit && \
+    upx --best --lzma /usr/local/bin/openresty && \
     \
     echo "Done"
 
