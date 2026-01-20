@@ -40,9 +40,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Cache Clean
-        # 使用 || true 允许命令在没有缓存时返回0退出码
-        run: gh cache delete --all || true
+      # - name: Cache Clean
+      #   # 使用 || true 允许命令在没有缓存时返回0退出码
+      #   run: gh cache delete --all || true
+      - name: Comprehensive Cache Clean
+        # 更彻底的缓存清理，包括所有类型的缓存
+        run: |
+          echo "===清理GitHub Actions缓存==="
+          gh cache delete --all || true
+          
+          echo "===清理Docker Buildx缓存==="
+          docker buildx prune -f || true
+          
+          echo "===清理Docker镜像和容器==="
+          docker system prune -af || true
+          
+          echo "===清理Trivy缓存==="
+          rm -rf ~/.cache/trivy || true
+          docker volume rm $(docker volume ls -q | grep trivy) 2>/dev/null || true
+          
+          echo "===缓存清理完成==="
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -102,15 +119,27 @@ jobs:
           echo "Repository: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
           echo "Tag: ${{ env.IMAGE_TAG }}"
 
-      - name: Scan image for vulnerabilities
+      - name: Comprehensive Vulnerability Scan
         if: github.event_name != 'pull_request'
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
           format: 'sarif'
           output: 'trivy-results.sarif'
-          # 禁用缓存以减少存储使用
-          skip-db-update: false  # 可以设置为true跳过数据库更新，但会影响扫描准确性
+          # 启用全面扫描
+          scan-type: 'image'
+          vuln-type: 'os,library'  # 扫描操作系统包和应用程序依赖
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW,UNKNOWN'  # 扫描所有严重级别
+          ignore-unfixed: false  # 不忽略未修复的漏洞
+          
+          # 启用深度扫描选项
+          security-checks: 'vuln,config,secret,license'  # 扫描漏洞、配置、密钥、许可证
+          
+          # 启用详细日志
+          debug: true
+          
+          # 数据库更新设置
+          skip-db-update: false  # 每次扫描都更新漏洞数据库
           skip-java-db-update: false
 
       - name: Upload Trivy scan results
@@ -119,3 +148,10 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
           category: 'container-vulnerability-scan'
+
+      - name: Display scan summary
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "===漏洞扫描结果摘要==="
+          echo "请查看安全选项卡获取详细的Trivy扫描结果"
+          echo "扫描结果已上传到GitHub Security选项卡"
