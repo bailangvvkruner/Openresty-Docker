@@ -41,7 +41,8 @@ jobs:
           fetch-depth: 0
 
       - name: Cache Clean
-        run: gh cache delete --all
+        # 使用 || true 允许命令在没有缓存时返回0退出码
+        run: gh cache delete --all || true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
