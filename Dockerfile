@@ -252,12 +252,13 @@ RUN set -eux \
     find /usr/local/lualib -name '*.so' -exec strip {} \; && \
     \
     upx --best --lzma /usr/local/nginx/sbin/nginx && \
-    # 压缩实际的luajit二进制文件而不是符号链接
-    # upx --best --lzma "$LUAJIT_BIN" 2>/dev/null || echo "Skipping luajit upx compression (is symlink)" && \
-    # upx --best --lzma /usr/local/luajit && \
-    find /usr/local/luajit -type f -exec upx --best --lzma {} \; && \
-    upx --best --lzma /usr/local/luajit && \
-    upx --best --lzma /usr/local/bin/openresty && \
+    # 只压缩实际的二进制文件，避免压缩目录
+    # 压缩luajit二进制文件
+    upx --best --lzma /usr/local/luajit/bin/luajit && \
+    # 压缩openresty二进制文件
+    upx --best --lzma /usr/local/bin/openresty 2>/dev/null && \
+    # 压缩luajit库文件
+    upx --best --lzma /usr/local/luajit/lib/libluajit-5.1.so.2 && \
     \
     echo "Done"
 
@@ -282,7 +283,8 @@ RUN mkdir -p /usr/local/lib \
 ENV PATH="/usr/local/nginx/sbin:/usr/local/bin:$PATH"
 ENV LUA_PATH="/usr/local/lualib/?.lua;;"
 ENV LUA_CPATH="/usr/local/lualib/?.so;;"
-ENV LD_LIBRARY_PATH="/usr/local/luajit/lib:$LD_LIBRARY_PATH"
+# 使用${VAR:-}语法避免未定义变量警告
+ENV LD_LIBRARY_PATH="/usr/local/luajit/lib:${LD_LIBRARY_PATH:-}"
 
 WORKDIR /usr/local/nginx
 
