@@ -251,7 +251,7 @@ RUN set -eux \
     find /usr/local/lualib -name '*.so' -exec strip {} \; && \
     \
     upx --best --lzma /usr/local/nginx/sbin/nginx && \
-    upx --best --lzma /usr/local/bin/openresty && \
+    # upx --best --lzma /usr/local/bin/openresty && \
     # 压缩实际的luajit二进制文件而不是符号链接
     upx --best --lzma "$LUAJIT_BIN" && \
     \
