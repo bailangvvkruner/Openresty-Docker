@@ -252,13 +252,28 @@ RUN set -eux \
     find /usr/local/lualib -name '*.so' -exec strip {} \; && \
     \
     upx --best --lzma /usr/local/nginx/sbin/nginx && \
-    # 只压缩实际的二进制文件，避免压缩目录
-    # 压缩luajit二进制文件
-    upx --best --lzma /usr/local/luajit/bin/luajit && \
+    # 只压缩实际的二进制文件，避免压缩符号链接
+    # 获取luajit二进制文件的实际路径
+    LUAJIT_BIN=$(readlink -f /usr/local/luajit/bin/luajit) && \
+    if [ -n "$LUAJIT_BIN" ] && [ -f "$LUAJIT_BIN" ]; then \
+        upx --best --lzma "$LUAJIT_BIN" && \
+    else \
+        echo "Skipping luajit upx compression: not a file or symlink target not found" && \
+    fi && \
     # 压缩openresty二进制文件
-    upx --best --lzma /usr/local/bin/openresty 2>/dev/null && \
+    OPENRESTY_BIN=$(readlink -f /usr/local/bin/openresty) && \
+    if [ -n "$OPENRESTY_BIN" ] && [ -f "$OPENRESTY_BIN" ]; then \
+        upx --best --lzma "$OPENRESTY_BIN" && \
+    else \
+        echo "Skipping openresty upx compression: not a file or symlink target not found" && \
+    fi && \
     # 压缩luajit库文件
-    upx --best --lzma /usr/local/luajit/lib/libluajit-5.1.so.2 && \
+    LUAJIT_LIB=$(readlink -f /usr/local/luajit/lib/libluajit-5.1.so.2) && \
+    if [ -n "$LUAJIT_LIB" ] && [ -f "$LUAJIT_LIB" ]; then \
+        upx --best --lzma "$LUAJIT_LIB" && \
+    else \
+        echo "Skipping luajit library upx compression: not a file or symlink target not found" && \
+    fi && \
     \
     echo "Done"
 
