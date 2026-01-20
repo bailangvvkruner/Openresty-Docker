@@ -241,7 +241,8 @@ RUN set -eux \
     # strip /usr/local/nginx/sbin/nginx
     strip /usr/local/bin/openresty && \
     strip /usr/local/nginx/sbin/nginx && \
-    strip /usr/local/luajit && \
+    # strip /usr/local/luajit && \
+    find /usr/local/luajit -type f -exec strip {} \; && \
     # # 处理luajit符号链接问题：找到实际文件路径
     # LUAJIT_BIN=$(readlink -f /usr/local/luajit/bin/luajit) && \
     # strip "$LUAJIT_BIN" && \
