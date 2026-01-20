@@ -1,3 +1,4 @@
+
 # FROM alpine:3.20 AS builder
 FROM alpine:latest AS builder
 
@@ -241,48 +242,19 @@ RUN set -eux \
     # strip /usr/local/nginx/sbin/nginx
     strip /usr/local/bin/openresty && \
     strip /usr/local/nginx/sbin/nginx && \
-    # strip /usr/local/luajit && \
-    find /usr/local/luajit -type f -exec strip {} \; && \
-    # # 处理luajit符号链接问题：找到实际文件路径
-    # LUAJIT_BIN=$(readlink -f /usr/local/luajit/bin/luajit) && \
-    # strip "$LUAJIT_BIN" && \
+    # 处理luajit符号链接问题：找到实际文件路径
+    LUAJIT_BIN=$(readlink -f /usr/local/luajit/bin/luajit) && \
+    strip "$LUAJIT_BIN" && \
     strip /usr/local/luajit/lib/libluajit-5.1.so.2 && \
     # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; && \
     find /usr/local/nginx -name '*.so' -exec strip {} \; && \
     find /usr/local/lualib -name '*.so' -exec strip {} \; && \
     \
-    # 压缩nginx二进制文件，这是核心组件
-    echo "Compressing nginx binary..." && \
     upx --best --lzma /usr/local/nginx/sbin/nginx && \
-    
-    # 定义一个简化的压缩函数，减少重复代码
-    compress_file() {
-        local FILE="$1"
-        local NAME="$2"
-        
-        echo "Compressing $NAME..." && \
-        if [ -f "$FILE" ]; then \
-            # 检查是否为符号链接
-            if [ -L "$FILE" ]; then \
-                # 是符号链接，获取实际文件路径
-                local REAL_FILE=$(readlink -f "$FILE") \
-                if [ -f "$REAL_FILE" ]; then \
-                    # 压缩实际文件
-                    upx --best --lzma "$REAL_FILE" || echo "  - $NAME compression failed, skipping" && \
-                fi \
-            else \
-                # 不是符号链接，直接压缩
-                upx --best --lzma "$FILE" || echo "  - $NAME compression failed, skipping" && \
-            fi \
-        fi \
-    } \
-    
-    # 使用函数简化压缩过程
-    compress_file "/usr/local/luajit/bin/luajit" "luajit binary" && \
-    compress_file "/usr/local/bin/openresty" "openresty binary" && \
-    compress_file "/usr/local/luajit/lib/libluajit-5.1.so.2" "luajit library" && \
-    
-    echo "UPX compression completed" && \
+    upx --best --lzma /usr/local/bin/openresty && \
+    # 压缩实际的luajit二进制文件而不是符号链接
+    upx --best --lzma "$LUAJIT_BIN" && \
+    \
     echo "Done"
 
 FROM alpine:latest
@@ -306,12 +278,11 @@ RUN mkdir -p /usr/local/lib \
 ENV PATH="/usr/local/nginx/sbin:/usr/local/bin:$PATH"
 ENV LUA_PATH="/usr/local/lualib/?.lua;;"
 ENV LUA_CPATH="/usr/local/lualib/?.so;;"
-# 使用${VAR:-}语法避免未定义变量警告
-ENV LD_LIBRARY_PATH="/usr/local/luajit/lib:${LD_LIBRARY_PATH:-}"
+ENV LD_LIBRARY_PATH="/usr/local/luajit/lib:$LD_LIBRARY_PATH"
 
 WORKDIR /usr/local/nginx
 
-RUN mkdir -p /usr/local/nginx/logs && chown -R nobody:nobody /usr/local/nginx/logs /usr/local/nginx
+RUN mkdir -p /data/logs && chown -R nobody:nobody /data/logs /usr/local/nginx
 
 USER nobody
 
