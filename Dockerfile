@@ -251,30 +251,38 @@ RUN set -eux \
     find /usr/local/nginx -name '*.so' -exec strip {} \; && \
     find /usr/local/lualib -name '*.so' -exec strip {} \; && \
     \
+    # 压缩nginx二进制文件，这是核心组件
+    echo "Compressing nginx binary..." && \
     upx --best --lzma /usr/local/nginx/sbin/nginx && \
-    # 只压缩实际的二进制文件，避免压缩符号链接
-    # 获取luajit二进制文件的实际路径
-    LUAJIT_BIN=$(readlink -f /usr/local/luajit/bin/luajit) && \
-    if [ -n "$LUAJIT_BIN" ] && [ -f "$LUAJIT_BIN" ]; then \
-        upx --best --lzma "$LUAJIT_BIN" && \
-    else \
-        echo "Skipping luajit upx compression: not a file or symlink target not found" && \
-    fi && \
-    # 压缩openresty二进制文件
-    OPENRESTY_BIN=$(readlink -f /usr/local/bin/openresty) && \
-    if [ -n "$OPENRESTY_BIN" ] && [ -f "$OPENRESTY_BIN" ]; then \
-        upx --best --lzma "$OPENRESTY_BIN" && \
-    else \
-        echo "Skipping openresty upx compression: not a file or symlink target not found" && \
-    fi && \
-    # 压缩luajit库文件
-    LUAJIT_LIB=$(readlink -f /usr/local/luajit/lib/libluajit-5.1.so.2) && \
-    if [ -n "$LUAJIT_LIB" ] && [ -f "$LUAJIT_LIB" ]; then \
-        upx --best --lzma "$LUAJIT_LIB" && \
-    else \
-        echo "Skipping luajit library upx compression: not a file or symlink target not found" && \
-    fi && \
-    \
+    
+    # 定义一个简化的压缩函数，减少重复代码
+    compress_file() {
+        local FILE="$1"
+        local NAME="$2"
+        
+        echo "Compressing $NAME..." && \
+        if [ -f "$FILE" ]; then \
+            # 检查是否为符号链接
+            if [ -L "$FILE" ]; then \
+                # 是符号链接，获取实际文件路径
+                local REAL_FILE=$(readlink -f "$FILE") \
+                if [ -f "$REAL_FILE" ]; then \
+                    # 压缩实际文件
+                    upx --best --lzma "$REAL_FILE" || echo "  - $NAME compression failed, skipping" && \
+                fi \
+            else \
+                # 不是符号链接，直接压缩
+                upx --best --lzma "$FILE" || echo "  - $NAME compression failed, skipping" && \
+            fi \
+        fi \
+    } \
+    
+    # 使用函数简化压缩过程
+    compress_file "/usr/local/luajit/bin/luajit" "luajit binary" && \
+    compress_file "/usr/local/bin/openresty" "openresty binary" && \
+    compress_file "/usr/local/luajit/lib/libluajit-5.1.so.2" "luajit library" && \
+    
+    echo "UPX compression completed" && \
     echo "Done"
 
 FROM alpine:latest
