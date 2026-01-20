@@ -280,7 +280,7 @@ ENV LD_LIBRARY_PATH="/usr/local/luajit/lib:$LD_LIBRARY_PATH"
 
 WORKDIR /usr/local/nginx
 
-RUN mkdir -p /data/logs && chown -R nobody:nobody /data/logs /usr/local/nginx
+RUN mkdir -p /usr/local/nginx/logs && chown -R nobody:nobody /usr/local/nginx/logs /usr/local/nginx
 
 USER nobody
 
