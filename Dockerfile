@@ -124,7 +124,6 @@ RUN set -eux \
     #   --with-threads && \
     # make -j$(nproc) && \
     # make install \
-  
     cd openresty-${OPENRESTY_VERSION} && \
     # 申明两个模块路径
     export ZSTD_INC=/usr/local/zstd/include && \
@@ -242,14 +241,17 @@ RUN set -eux \
     # strip /usr/local/nginx/sbin/nginx
     # strip /usr/local/bin/openresty && \
     strip /usr/local/nginx/sbin/nginx && \
-    strip /usr/local/luajit/bin/luajit && \
+    # 处理luajit符号链接问题：找到实际文件路径
+    LUAJIT_BIN=$(readlink -f /usr/local/luajit/bin/luajit) && \
+    strip "$LUAJIT_BIN" && \
     strip /usr/local/luajit/lib/libluajit-5.1.so.2 && \
     # find /usr/local/nginx/modules -name '*.so' -exec strip {} \; && \
     find /usr/local/nginx -name '*.so' -exec strip {} \; && \
     find /usr/local/lualib -name '*.so' -exec strip {} \; && \
     \
     upx --best --lzma /usr/local/nginx/sbin/nginx && \
-    upx --best --lzma /usr/local/luajit/bin/luajit && \
+    # 压缩实际的luajit二进制文件而不是符号链接
+    upx --best --lzma "$LUAJIT_BIN" 2>/dev/null || echo "Skipping luajit upx compression (is symlink)" && \
     \
     echo "Done"
 
