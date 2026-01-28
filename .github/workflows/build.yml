@@ -66,6 +66,11 @@ jobs:
 
       - name: Create multi-core Buildx builder
         run: |
+          # 检查并删除已存在的构建器
+          if docker buildx inspect multi-core-builder >/dev/null 2>&1; then
+            echo "Builder multi-core-builder exists, removing it..."
+            docker buildx rm multi-core-builder
+          fi
           # 创建一个使用多核的构建器
           docker buildx create --name multi-core-builder --driver docker-container --use \
             --driver-opt "image=moby/buildkit:latest" \
