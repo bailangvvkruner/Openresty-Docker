@@ -106,6 +106,9 @@ jobs:
           platforms: |
               linux/amd64
               linux/arm64
+              linux/386
+              linux/arm/v6
+              linux/arm/v7
           # push: true
           push: false
           load: true  # 添加这一行，将镜像加载到本地
