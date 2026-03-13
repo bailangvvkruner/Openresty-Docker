@@ -40,7 +40,7 @@ RUN set -eux \
     | head -n1 \
     | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+') \
     && \
-    OPENSSL_VERSION=$(wget -q -O - https://www.openssl.org/source/ | grep -oE 'openssl-3\.[0-9]+\.[0-9]+' | head -n1 | cut -d'-' -f2) \
+    OPENSSL_VERSION=$(curl -s https://api.github.com/repos/openssl/openssl/releases | jq -r '[.[] | select(.prerelease == true) | .tag_name] | .[0]' | sed 's/openssl-//') \
     && \
     # ZLIB_VERSION=$(wget -q -O - https://zlib.net/ | grep -oE 'zlib-[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -d'-' -f2) \
     ZLIB_VERSION=$(curl -sL https://github.com/madler/zlib/releases/latest | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -c2-) \
@@ -77,7 +77,7 @@ RUN set -eux \
     # curl -fSL https://github.com/openresty/openresty/releases/download/v${OPENRESTY_VERSION}/openresty-${OPENRESTY_VERSION}.tar.gz  && \
     tar xzf openresty.tar.gz && \
     \
-    curl -fSL https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz -o openssl.tar.gz && \
+    curl -fSL https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz -o openssl.tar.gz && \
     tar xzf openssl.tar.gz && \
     \
     # curl -fSL https://fossies.org/linux/misc/zlib-${ZLIB_VERSION}.tar.gz -o zlib.tar.gz && \
