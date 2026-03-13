@@ -40,7 +40,7 @@ RUN set -eux \
     | head -n1 \
     | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+') \
     && \
-    OPENSSL_VERSION=$(wget -q -O - https://www.openssl.org/source/ | grep -oE 'openssl-[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -d'-' -f2) \
+    OPENSSL_VERSION=$(wget -q -O - https://www.openssl.org/source/ | grep -oE 'openssl-3\.[0-9]+\.[0-9]+' | head -n1 | cut -d'-' -f2) \
     && \
     # ZLIB_VERSION=$(wget -q -O - https://zlib.net/ | grep -oE 'zlib-[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -d'-' -f2) \
     ZLIB_VERSION=$(curl -sL https://github.com/madler/zlib/releases/latest | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | cut -c2-) \
